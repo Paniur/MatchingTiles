@@ -4,7 +4,7 @@ import { SceneManager } from "./SceneManager";
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 class Application {
-    app = new PIXI.Application();
+    app = new PIXI.Application({resizeTo: window});
     run(config) {
         this.config = config;
         // this.app = new PIXI.Application({resizeTo: window});
