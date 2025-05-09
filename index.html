@@ -2,6 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Matching Tiles</title>
   </head>
   <style>
 body {
@@ -10,18 +14,43 @@ body {
     margin: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    position: fixed;
 }
 canvas {
-    position:absolute;
-    top:50%;
-    left:50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     -o-transform: translate(-50%, -50%);
     -ms-transform: translate(-50%, -50%);
     -moz-transform: translate(-50%, -50%);
     -webkit-transform: translate(-50%, -50%);
+    max-width: 100vw;
+    max-height: 100vh;
 }
   </style>
   <body>
+    <script>
+      // Prevent scrolling on mobile devices
+      document.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+      }, { passive: false });
+      
+      // Handle visibility change for iframe pause/resume
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          // Game is hidden, dispatch pause event if needed
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('game-pause'));
+          }
+        } else {
+          // Game is visible again, dispatch resume event if needed
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('game-resume'));
+          }
+        }
+      });
+    </script>
   </body>
 </html>
