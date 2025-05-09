@@ -152,10 +152,33 @@ export class Game extends Scene {
     createBackground() {
         this.bg = App.sprite("bg");
         this.container.addChild(this.bg);
-        this.bg.width = window.innerWidth;
-        this.bg.height = window.innerHeight;
+        
+        // Initial sizing
+        this.resizeBackground({
+            detail: {
+                width: App.width,
+                height: App.height
+            }
+        });
+        
+        // Listen for resize events
+        window.addEventListener('game-resize', this.resizeBackground.bind(this));
     }
 
+    resizeBackground(event) {
+        // Get dimensions from the event if available, otherwise use App dimensions
+        const width = event?.detail?.width || App.width;
+        const height = event?.detail?.height || App.height;
+        
+        // Scale background to match game dimensions
+        this.bg.width = width;
+        this.bg.height = height;
+        
+        // Center the background
+        this.bg.x = -width / 2;
+        this.bg.y = -height / 2;
+    }
+    
     removeStartMatches() {
         let matches = this.combinationManager.getMatches();
 
