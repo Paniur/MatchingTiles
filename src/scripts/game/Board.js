@@ -33,8 +33,21 @@ export class Board {
         this.fieldSize = this.fields[0].sprite.width;
         this.width = this.cols * this.fieldSize;
         this.height = this.rows * this.fieldSize;
-        this.container.x = (window.innerWidth - this.width) / 2 + this.fieldSize / 2;
-        this.container.y = (window.innerHeight - this.height) / 2 + this.fieldSize / 2;
+        
+        // Listen for the game-resize event to properly position the board
+        window.addEventListener('game-resize', (e) => this.onResize(e.detail));
+        
+        // Initial positioning
+        this.onResize({
+            width: App.width,
+            height: App.height
+        });
+    }
+    
+    onResize(data) {
+        // Center the board using the App's scaled dimensions
+        this.container.x = (data.width - this.width) / 2 + this.fieldSize / 2;
+        this.container.y = (data.height - this.height) / 2 + this.fieldSize / 2;
     }
 
     create() {
