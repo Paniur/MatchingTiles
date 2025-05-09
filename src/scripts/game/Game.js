@@ -175,8 +175,8 @@ export class Game extends Scene {
         this.bg.height = height;
         
         // Center the background
-        this.bg.x = -width / 2;
-        this.bg.y = -height / 2;
+        // this.bg.x = -width / 2;
+        // this.bg.y = -height / 2;
     }
     
     removeStartMatches() {
