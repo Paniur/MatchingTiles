@@ -84,7 +84,7 @@ export class Game extends Scene {
             let completed = 0;
             fields.forEach(field => {
                 const tile = this.board.createTile(field);
-                tile.sprite.y = -700;
+                tile.sprite.y = -1000;
 
                 const delay = Math.random() * 2 / 10 + 0.3 / (field.row + 1);
                 tile.fallDownTo(field.position, delay).then(() => {
