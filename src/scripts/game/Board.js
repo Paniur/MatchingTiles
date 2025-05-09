@@ -46,8 +46,20 @@ export class Board {
     
     onResize(data) {
         // Center the board using the App's scaled dimensions
-        this.container.x = (data.width - this.width) / 2 + this.fieldSize / 2;
-        this.container.y = (data.height - this.height) / 2 + this.fieldSize / 2;
+        // Apply special positioning for iframe environments
+        if (data.inIframe) {
+            // Ensure proper centering in iframe
+            this.container.x = Math.max(0, (data.width - this.width) / 2);
+            this.container.y = Math.max(0, (data.height - this.height) / 2);
+            
+            // Adjust for field size to ensure tiles are centered on fields
+            this.container.x += this.fieldSize / 2;
+            this.container.y += this.fieldSize / 2;
+        } else {
+            // Standard positioning for non-iframe
+            this.container.x = (data.width - this.width) / 2 + this.fieldSize / 2;
+            this.container.y = (data.height - this.height) / 2 + this.fieldSize / 2;
+        }
     }
 
     create() {

@@ -143,24 +143,41 @@ class Application {
         const scaleY = windowHeight / this.height;
         const scale = Math.min(scaleX, scaleY);
         
+        // For iframe environments, ensure we don't scale too small
+        if (this.inIframe()) {
+            // Ensure minimum scale for visibility in iframes
+            const minScale = 0.5;
+            this.scale = Math.max(scale, minScale);
+        } else {
+            this.scale = scale;
+        }
+        
         // Apply the scale to the stage
-        this.app.stage.scale.set(scale);
+        this.app.stage.scale.set(this.scale);
         
         // Center the stage (alignment strategy)
-        this.app.stage.x = (windowWidth - (this.width * scale)) / 2;
-        this.app.stage.y = (windowHeight - (this.height * scale)) / 2;
+        this.app.stage.x = (windowWidth - (this.width * this.scale)) / 2;
+        this.app.stage.y = (windowHeight - (this.height * this.scale)) / 2;
         
         // Special handling for iOS devices
         if (this.isIOS() && this.app.stage.y > 2) {
             this.app.stage.y = Math.round(this.app.stage.y - 0.3 * this.app.stage.y);
         }
         
+        // Ensure stage is always centered in iframe
+        if (this.inIframe()) {
+            // Force center alignment in iframe
+            this.app.stage.x = Math.max(0, (windowWidth - (this.width * this.scale)) / 2);
+            this.app.stage.y = Math.max(0, (windowHeight - (this.height * this.scale)) / 2);
+        }
+        
         // Dispatch resize event for other components
         this.dispatchResizeEvent({
-            scale: scale,
+            scale: this.scale,
             width: this.width,
             height: this.height,
-            isLandscape: isLandscape
+            isLandscape: isLandscape,
+            inIframe: this.inIframe()
         });
     }
     
