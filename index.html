@@ -94,7 +94,86 @@ canvas {
 }
 
 .hidden {
-    visibility: hidden;
+    display: none !important;
+}
+
+/* Fullscreen gesture overlay */
+#fullscreen-gesture {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    pointer-events: all;
+}
+
+.fullscreen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1001;
+}
+
+.swipe-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1002;
+    color: white;
+    font-family: Arial, sans-serif;
+    width: 80%;
+    max-width: 300px;
+}
+
+.swipe-icon {
+    width: 60px;
+    height: 60px;
+    border: 2px solid white;
+    border-radius: 50%;
+    position: relative;
+    margin-bottom: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M7 14l5-5 5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 40px;
+    animation: pulse 2s infinite;
+}
+
+.swipe-text {
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.swipe-arrow {
+    width: 30px;
+    height: 50px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M7 14l5-5 5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    animation: swipeUp 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes swipeUp {
+    0% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-15px); opacity: 1; }
+    100% { transform: translateY(0); opacity: 0.5; }
 }
 .consoleHidden {
     display: none;
@@ -235,6 +314,17 @@ canvas {
   </style>
   <body>
     <canvas id="game-canvas"></canvas>
+    
+    <!-- Fullscreen swipe gesture overlay -->
+    <div id="fullscreen-gesture" class="hidden">
+      <div class="fullscreen-overlay"></div>
+      <div class="swipe-container">
+        <div class="swipe-icon"></div>
+        <div class="swipe-text">Swipe up for fullscreen</div>
+        <div class="swipe-arrow"></div>
+      </div>
+    </div>
+    
     <script>
       // Set up canvas size correctly for touch handling
       const canvas = document.getElementById('game-canvas');

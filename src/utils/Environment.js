@@ -101,6 +101,11 @@ class Environment {
     }
 
     requestFullscreen(e) {
+        // Hide the fullscreen gesture overlay if it exists
+        if (this.fullscreenGesture) {
+            this.fullscreenGesture.classList.add('hidden');
+        }
+        
         if (!this.isFullScreen() && this.isFullScreenSupported()) {
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
@@ -117,6 +122,9 @@ class Environment {
                 /* IE/Edge */
                 elem.msRequestFullscreen();
             }
+            
+            // Add a listener to check if fullscreen was successful
+            document.addEventListener('fullscreenchange', this.onFullscreenChange.bind(this), { once: true });
         } else {
             this.touchDown = false;
             this.onScroll(null);
@@ -124,7 +132,12 @@ class Environment {
     }
 
     setupFullscreenHandlers() {
-        debugger;
+        // Initialize gesture overlay elements
+        this.fullscreenGesture = document.getElementById('fullscreen-gesture');
+        this.touchStartY = 0;
+        this.touchEndY = 0;
+        this.minSwipeDistance = 50; // Minimum distance for a swipe to be detected
+        
         if (this.isMobileIos() && !this.inIframe()) {
             this.setIOSFullscreen();
             
@@ -139,8 +152,47 @@ class Environment {
             this.onResize({});
         } else {
             if (this.getDeviceType() === 'mobile') {
+                // Show fullscreen gesture overlay for mobile devices
+                this.setupFullscreenGesture();
                 document.addEventListener('touchend', this.touchendHandler);
             }
+        }
+    }
+    
+    setupFullscreenGesture() {
+        if (!this.fullscreenGesture) return;
+        
+        // Only show the gesture if we're not already in fullscreen and on mobile
+        if (!this.isFullScreen() && this.isMobile()) {
+            this.fullscreenGesture.classList.remove('hidden');
+            
+            // Add swipe detection
+            this.fullscreenGesture.addEventListener('touchstart', (e) => {
+                this.touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            this.fullscreenGesture.addEventListener('touchmove', (e) => {
+                this.touchEndY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            this.fullscreenGesture.addEventListener('touchend', () => {
+                // Check if it was a swipe up
+                if (this.touchStartY - this.touchEndY > this.minSwipeDistance) {
+                    // Hide the gesture overlay
+                    this.fullscreenGesture.classList.add('hidden');
+                    // Request fullscreen
+                    this.requestFullscreen();
+                }
+            });
+            
+            // Also allow tapping the overlay to enter fullscreen
+            this.fullscreenGesture.addEventListener('click', () => {
+                this.fullscreenGesture.classList.add('hidden');
+                this.requestFullscreen();
+            });
+        } else {
+            // Already in fullscreen, hide the gesture
+            this.fullscreenGesture.classList.add('hidden');
         }
     }
 
@@ -247,6 +299,21 @@ class Environment {
     visibilityChange() {
         if (document.hidden) {
             this.touchDown = false;
+        }
+    }
+    
+    onFullscreenChange() {
+        // Check if fullscreen was successful
+        if (!document.fullscreenElement && this.isMobile()) {
+            // If fullscreen failed or was exited, show the gesture overlay again
+            if (this.fullscreenGesture) {
+                this.fullscreenGesture.classList.remove('hidden');
+            }
+        } else {
+            // Fullscreen successful, hide the gesture
+            if (this.fullscreenGesture) {
+                this.fullscreenGesture.classList.add('hidden');
+            }
         }
     }
 
