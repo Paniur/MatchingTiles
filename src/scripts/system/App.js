@@ -11,8 +11,8 @@ class Application {
     app = new PIXI.Application({width: 1360, height: 765});
     
     // Default dimensions
-    defaultWidth = 1360;
-    defaultHeight = 765;
+    width = 1360;
+    height = 765;
     
     run(config) {
         this.config = config;
@@ -27,10 +27,9 @@ class Application {
             window.__PIXI_APP__ = this.app;
             gsap.registerPlugin(PixiPlugin);
             PixiPlugin.registerPIXI(PIXI);
-            document.body.appendChild(this.app.canvas)
+            document.body.appendChild(this.app.canvas);
             this.loader = new Loader(this.config);
             this.loader.preload().then(() => this.start());
-            console.log(this.loader.resources);
             this.scenes = new SceneManager();
             this.app.stage.addChild(this.scenes.container);
             
@@ -40,22 +39,21 @@ class Application {
             // Check if we're in an iframe
             if (this.inIframe()) {
                 this.setupIframeHandling();
-            } else {
-                // Add fullscreen button for mobile devices
-                this.setupFullscreenHandling();
+            } else if (environment.isMobile()) {
+                // Add fullscreen handling for mobile devices
+                environment.addMobileFullscreen();
             }
-            
-            // Set up environment handlers for fullscreen and touch
-            environment.setupFullscreenHandlers();
             
             // Initial resize
             this.resize();
             
             // Add event listener for cleanup when component unmounts
             window.addEventListener('beforeunload', () => {
-                environment.removeFullscreenHandlers();
+                if (!this.inIframe() && environment.isMobile()) {
+                    environment.removeFullscreenHandlers();
+                }
             });
-        })()
+        })();
     }
 
     // Check if running in an iframe
@@ -72,39 +70,14 @@ class Application {
             if (message && message.command) {
                 switch(message.command) {
                     case 'pauseGame':
-                        // Implement pause functionality
+                        this.onGamePause();
                         break;
                     case 'resumeGame':
-                        // Implement resume functionality
+                        this.onGameResume();
                         break;
                 }
             }
         });
-    }
-    
-    // Setup fullscreen handling for mobile
-    setupFullscreenHandling() {
-        // Only add fullscreen handling on mobile devices
-        if (this.isMobile()) {
-            const fullscreenButton = document.createElement('div');
-            fullscreenButton.style.position = 'absolute';
-            fullscreenButton.style.width = '60px';
-            fullscreenButton.style.height = '60px';
-            fullscreenButton.style.top = '10px';
-            fullscreenButton.style.right = '10px';
-            fullscreenButton.style.background = 'rgba(0,0,0,0.5)';
-            fullscreenButton.style.borderRadius = '50%';
-            fullscreenButton.style.zIndex = '1000';
-            fullscreenButton.style.cursor = 'pointer';
-            fullscreenButton.innerHTML = '⛶'; // Fullscreen icon
-            fullscreenButton.style.color = 'white';
-            fullscreenButton.style.fontSize = '30px';
-            fullscreenButton.style.textAlign = 'center';
-            fullscreenButton.style.lineHeight = '60px';
-            
-            fullscreenButton.addEventListener('click', this.toggleFullscreen.bind(this));
-            document.body.appendChild(fullscreenButton);
-        }
     }
     
     // Check if device is mobile
@@ -112,69 +85,65 @@ class Application {
         return environment.isMobile();
     }
     
-    // Toggle fullscreen
-    toggleFullscreen() {
-        environment.requestFullscreen();
+    // Check if device is iOS
+    isIOS() {
+        return environment.isMobileIos();
     }
-
+    
     resize() {
-        // Get current dimensions - use clientWidth/Height for iframe compatibility
-        const containerWidth = document.documentElement.clientWidth || window.innerWidth;
-        const containerHeight = document.documentElement.clientHeight || window.innerHeight;
+        // Get current dimensions
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         
-        // Store dimensions for reference
-        this.width = containerWidth;
-        this.height = containerHeight;
+        // Set renderer size to match the window exactly
+        this.app.renderer.resize(width, height);
+        
+        // No scaling, use 1:1 mapping
+        this.scale = 1;
+        
+        // Center the stage
+        this.app.stage.scale.set(this.scale);
+        this.app.stage.x = Math.round((width - this.width) / 2);
+        this.app.stage.y = Math.round((height - this.height) / 2);
         
         // Determine orientation
-        const isLandscape = containerWidth > containerHeight;
-        
-        if (this.inIframe()) {
-            // In iframe: no scaling, just fit exactly to the iframe dimensions
-            // This ensures touch coordinates are correctly mapped
-            this.scale = 1;
-            this.app.stage.scale.set(1);
-            this.app.stage.x = 0;
-            this.app.stage.y = 0;
-            
-            // Resize the renderer to match the iframe exactly
-            this.app.renderer.resize(containerWidth, containerHeight);
-        } else {
-            // Not in iframe: use responsive scaling approach
-            // Calculate scale based on default dimensions
-            const targetWidth = isLandscape ? this.defaultWidth : this.defaultHeight;
-            const targetHeight = isLandscape ? this.defaultHeight : this.defaultWidth;
-            
-            const scaleX = containerWidth / targetWidth;
-            const scaleY = containerHeight / targetHeight;
-            this.scale = Math.min(scaleX, scaleY);
-            
-            // Apply the scale to the stage
-            this.app.stage.scale.set(this.scale);
-            
-            // Center the stage
-            this.app.stage.x = Math.round((containerWidth - (targetWidth * this.scale)) / 2);
-            this.app.stage.y = Math.round((containerHeight - (targetHeight * this.scale)) / 2);
-            
-            // Special handling for iOS devices when not in iframe
-            if (this.isIOS() && this.app.stage.y > 2) {
-                this.app.stage.y = Math.round(this.app.stage.y - 0.3 * this.app.stage.y);
-            }
-        }
+        const isLandscape = width > height;
         
         // Dispatch resize event for other components
         this.dispatchResizeEvent({
             scale: this.scale,
-            width: containerWidth,
-            height: containerHeight,
+            width: width,
+            height: height,
             isLandscape: isLandscape,
             inIframe: this.inIframe()
         });
+        
+        // Update game state if needed
+        if (this.currentScene && typeof this.currentScene.onResize === 'function') {
+            this.currentScene.onResize(width, height, this.scale);
+        }
     }
     
-    // Check if device is iOS
-    isIOS() {
-        return environment.isMobileIos();
+    // Game pause handler
+    onGamePause() {
+        // Pause game logic, sounds, etc.
+        if (this.currentScene && typeof this.currentScene.pause === 'function') {
+            this.currentScene.pause();
+        }
+        
+        // Dispatch pause event
+        window.dispatchEvent(new Event('game-pause'));
+    }
+    
+    // Game resume handler
+    onGameResume() {
+        // Resume game logic, sounds, etc.
+        if (this.currentScene && typeof this.currentScene.resume === 'function') {
+            this.currentScene.resume();
+        }
+        
+        // Dispatch resume event
+        window.dispatchEvent(new Event('game-resume'));
     }
     
     // Dispatch custom resize event
