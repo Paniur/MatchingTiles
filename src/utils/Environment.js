@@ -255,7 +255,14 @@ class Environment {
         // This is because iOS doesn't support true fullscreen API
         const app = document.body;
         if (app) {
-            app.style.height = '150vh';
+            // Use specific height values based on device
+            if (this.isiOSSafari) {
+                app.style.height = '150vh';
+            } else {
+                // For Chrome and other browsers
+                app.style.height = '135vh';
+            }
+            
             app.style.position = 'absolute';
             app.style.top = '25vh';
             
@@ -264,6 +271,17 @@ class Environment {
             if (canvas) {
                 canvas.style.position = 'absolute';
                 canvas.style.top = '0';
+            }
+            
+            // Set the fullscreen gesture overlay if it exists
+            const fullscreenGesture = document.getElementById('fullscreen-gesture');
+            if (fullscreenGesture) {
+                if (this.isiOSSafari) {
+                    fullscreenGesture.style.height = '104vh';
+                } else {
+                    fullscreenGesture.style.height = '102vh';
+                }
+                fullscreenGesture.style.zIndex = '1000';
             }
             
             // Scroll to the right position
@@ -292,31 +310,55 @@ class Environment {
 
     checkFullscreenIOS() {
         if (this.isMobileIos() && !this.inIframe()) {
-            let verticalOfset = 0.9;
+            let verticalOffset = 0.9;
+            let a, d;
 
             if (window.innerHeight > window.innerWidth) {
-                // portrait
-                verticalOfset = 0.87;
+                // Portrait mode
+                a = Math.min(window.screen.width, window.screen.height);
+                d = Math.max(window.screen.width, window.screen.height);
+                verticalOffset = 0.87;
 
                 if (this.isIpad() || /(iPad)/i.test(navigator.userAgent)) {
-                    // IPAD SAFARI // IPAD CHROME
-                    verticalOfset = 0.95;
+                    // iPad Safari/Chrome
+                    verticalOffset = 0.95;
                 } else if (/(iPhone)/i.test(navigator.userAgent) && this.isiOSChrome) {
-                    // IPHONE CHROME
-                    verticalOfset = 0.91;
-                }
-            }
-
-            const d = Math.max(window.screen.width, window.screen.height);
-            // This rounds calculate value to 2-nd decimal
-            const val = Math.round((window.innerHeight / d) * 100) / 100;
-            if (d === window.innerHeight || val >= verticalOfset) {
-                if (!this.isFullscreen) {
-                    this.isFullscreen = true;
+                    // iPhone Chrome
+                    verticalOffset = 0.91;
                 }
             } else {
+                // Landscape mode
+                a = Math.max(window.screen.width, window.screen.height);
+                d = Math.min(window.screen.width, window.screen.height);
+            }
+
+            // Calculate if we're in fullscreen - rounds to 2 decimal places
+            const val = Math.round((window.innerHeight / d) * 100) / 100;
+            
+            if (d === window.innerHeight || val >= verticalOffset) {
+                // We're in fullscreen
+                if (!this.isFullscreen) {
+                    this.isFullscreen = true;
+                    this.hideElement('fullscreen-gesture');
+                    
+                    // Adjust the fullscreen gesture overlay if it exists
+                    const el = document.getElementById('fullscreen-gesture');
+                    if (el && this.isiOSSafari) {
+                        el.style.height = '104vh';
+                    }
+                }
+            } else {
+                // Not in fullscreen
                 if (this.isFullscreen) {
                     this.isFullscreen = false;
+                    this.showElement('fullscreen-gesture');
+                    
+                    // Adjust the fullscreen gesture overlay if it exists
+                    const el = document.getElementById('fullscreen-gesture');
+                    if (el && this.isiOSSafari) {
+                        el.style.height = '102vh';
+                        el.style.zIndex = '1000';
+                    }
                 }
             }
         }
@@ -353,6 +395,24 @@ class Environment {
         if (document.hidden) {
             this.touchDown = false;
         }
+    }
+    
+    // Helper method to hide an element by ID
+    hideElement(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+        }
+        return el;
+    }
+    
+    // Helper method to show an element by ID
+    showElement(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('hidden');
+        }
+        return el;
     }
     
     onFullscreenChange() {
