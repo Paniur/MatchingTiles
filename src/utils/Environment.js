@@ -106,8 +106,23 @@ class Environment {
             this.fullscreenGesture.classList.add('hidden');
         }
         
+        // Set a meta viewport tag to prevent zooming issues
+        this.updateViewportMeta();
+        
         if (!this.isFullScreen() && this.isFullScreenSupported()) {
             const elem = document.documentElement;
+            
+            // For iOS Safari, we need special handling
+            if (this.isMobileIos()) {
+                // Ensure the canvas is properly sized before entering fullscreen
+                const canvas = document.getElementById('game-canvas');
+                if (canvas) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                }
+            }
+            
+            // Request fullscreen using the appropriate method
             if (elem.requestFullscreen) {
                 elem.requestFullscreen();
             } else if (elem.mozRequestFullScreen) {
@@ -124,11 +139,26 @@ class Environment {
             }
             
             // Add a listener to check if fullscreen was successful
-            document.addEventListener('fullscreenchange', this.onFullscreenChange.bind(this), { once: true });
+            document.addEventListener('fullscreenchange', this.onFullscreenChange.bind(this));
         } else {
             this.touchDown = false;
             this.onScroll(null);
         }
+    }
+    
+    updateViewportMeta() {
+        // Find the viewport meta tag
+        let viewportMeta = document.querySelector('meta[name="viewport"]');
+        
+        // If it doesn't exist, create it
+        if (!viewportMeta) {
+            viewportMeta = document.createElement('meta');
+            viewportMeta.name = 'viewport';
+            document.head.appendChild(viewportMeta);
+        }
+        
+        // Set the content to prevent zooming issues
+        viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
     }
 
     setupFullscreenHandlers() {

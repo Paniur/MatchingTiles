@@ -2,11 +2,9 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta
-    name="viewport"
-    content="width=device-width, height=device-height, initial-scale=1, user-scalable=no, viewport-fit=cover"
-/>
-<meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
   </head>
   <style>
 * {
@@ -45,22 +43,35 @@ html {
 }
 
 body {
-    width: inherit;
-    height: inherit;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     font-family: Arial, Helvetica, sans-serif;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent scrolling */
     background-color: black;
     user-select: none; /* Standard syntax */
     -webkit-user-select: none; /* Safari and older iOS */
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none;
+    position: fixed; /* Prevent body from moving */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 canvas {
     display: block;
     position: absolute;
-    width: 100vw;
-    height: 100vh;
+    width: 100% !important;
+    height: 100% !important;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    touch-action: manipulation; /* Improve touch handling */
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Hide desktop / mobiles only sections */
@@ -326,23 +337,32 @@ canvas {
     </div>
     
     <script>
-      // Set up canvas size correctly for touch handling
+      // Set up canvas for proper display
       const canvas = document.getElementById('game-canvas');
-      function resizeCanvas() {
-        const width = document.documentElement.clientWidth || window.innerWidth;
-        const height = document.documentElement.clientHeight || window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+      
+      // Let the game engine handle the resizing
+      // Just ensure we notify the game when important events happen
+      function notifyGameOfResize() {
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new Event('resize'));
+        }
       }
       
-      // Initial sizing and resize handling
-      resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
-      window.addEventListener('orientationchange', resizeCanvas);
-      // // Prevent scrolling on mobile devices
-      // document.addEventListener('touchmove', function(e) {
-      //   e.preventDefault();
-      // }, { passive: false });
+      // Add essential event listeners
+      window.addEventListener('resize', notifyGameOfResize);
+      window.addEventListener('orientationchange', notifyGameOfResize);
+      window.addEventListener('fullscreenchange', notifyGameOfResize);
+      // Add Core sound stubs to fix console errors
+      window.Core = window.Core || {};
+      window.Core.sounds = window.Core.sounds || {
+        getSoundCurrentTime: function(id) { return 0; },
+        getSoundCurrentVolume: function(id) { return 0; }
+      };
+      
+      // Prevent scrolling on mobile devices
+      document.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+      }, { passive: false });
       
       // Handle visibility change for iframe pause/resume
       document.addEventListener('visibilitychange', function() {
