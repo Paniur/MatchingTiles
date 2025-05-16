@@ -119,14 +119,49 @@ canvas {
     pointer-events: all;
 }
 
-.fullscreen-overlay {
-    position: absolute;
+.fullscreen-gesture {
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 1001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fullscreen-gesture.hidden {
+    display: none;
+}
+
+.gesture-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+}
+
+.full-screen-hand {
+    width: 114px;
+    height: 112px;
+    margin-bottom: 20px;
+    animation-name: fullscreen-swipe;
+    animation-duration: 1.8s;
+    animation-iteration-count: infinite;
+    -webkit-animation-name: fullscreen-swipe;
+    -webkit-animation-duration: 1.8s;
+    -webkit-animation-iteration-count: infinite;
+}
+
+.swipe-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: #E8E8E8;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .swipe-container {
@@ -327,14 +362,21 @@ canvas {
     <canvas id="game-canvas"></canvas>
     
     <!-- Fullscreen swipe gesture overlay -->
-    <div id="fullscreen-gesture" class="hidden">
-      <div class="fullscreen-overlay"></div>
-      <div class="swipe-container">
-        <div class="swipe-icon"></div>
+    <div id="fullscreen-gesture" class="fullscreen-gesture">
+      <div class="gesture-container">
+        <div class="swipe-icon">
+          <svg class="full-screen-hand" viewBox="0 0 114 112">
+            <g id="Artboard" transform="translate(-43.000000, -44.000000)" fill="#E8E8E8" fill-rule="nonzero">
+              <path d="M54.0888672,44.2789912 C56.1064453,44.7343558 56.8219819,45.5691478 58.2626363,46.7136733 C60.3227722,48.3538407 61.3000161,50.7171184 62.5605887,52.8840548 C66.5968222,59.8278291 70.5826328,66.7907586 74.6020587,73.7393216 C74.7605307,74.0170726 74.8973929,74.5007424 75.3536001,74.3546837 C75.7425768,74.232569 75.5288797,73.8015761 75.5745004,73.5118532 C75.9346704,71.0048595 77.3955873,68.7879917 79.560311,67.4635863 C83.5965445,64.877629 90.2019451,66.2663839 92.8239362,71.3185782 C93.0376332,71.7328103 93.2057096,72.1877472 93.7699659,72.5157807 C94.4710844,68.0909204 96.6128573,64.8034025 101.282979,64.2071957 C106.930344,63.4888742 110.279866,66.728504 112.582512,71.5197083 C112.844231,69.7239046 113.26202,68.0669764 114.212852,66.6255446 C116.746003,62.7944968 121.437734,62.0043431 125.322699,63.6445105 C127.742999,64.664527 129.282098,66.5177964 130.561879,68.7517762 C136.999203,80.0054793 143.506159,91.2304495 149.984302,102.467392 C151.869158,105.73336 154.078162,108.836509 155.326729,112.432905 C158.304081,121.009663 157.353249,129.102752 152.111668,136.587662 C150.241219,139.257423 147.69126,141.189708 144.874781,142.813115 C138.631945,146.404722 132.389109,150.046612 126.146273,153.61667 C120.731814,156.703058 115.053234,156.461223 109.300221,154.761195 C104.349172,153.298214 99.8615331,150.769722 95.2034171,148.631519 C83.5341162,143.275235 71.6415138,138.440931 59.7993344,133.489302 C53.6429378,130.915317 51.2010285,123.523789 54.8218733,118.356663 C57.2373706,114.911114 61.960316,113.74025 65.8020612,115.483377 C70.8323463,117.767639 75.9178564,119.929787 80.9793556,122.147006 C81.1234211,122.20926 81.2578822,122.31222 81.4595738,122.147006 C77.5457959,115.385206 73.6304173,108.618618 69.713438,101.847241 C61.4568874,87.6021279 53.198736,73.3594094 44.9389839,59.1190852 C44.305096,58.0248422 43.9521356,56.8180621 43.3758739,55.7046638 C42.8747087,53.8242578 42.8747087,51.9551878 43.3758739,50.0974538 C44.1276216,47.3108529 45.7793094,46.1130144 47.180102,45.060318 C49.3335802,43.8236266 52.0712891,43.8236266 54.0888672,44.2789912 Z" id="hand"></path>
+            </g>
+          </svg>
+        </div>
         <div class="swipe-text">Swipe up for fullscreen</div>
-        <div class="swipe-arrow"></div>
       </div>
     </div>
+    
+    <!-- iOS fullscreen overlay -->
+    <div id="iOSFullscreen" class="hidden"></div>
     
     <script>
       // Set up canvas for proper display

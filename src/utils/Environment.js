@@ -120,6 +120,10 @@ class Environment {
                     canvas.style.width = '100%';
                     canvas.style.height = '100%';
                 }
+                
+                // Special handling for iOS fullscreen
+                this.setIOSFullscreen();
+                this.checkFullscreenIOS();
             }
             
             // Request fullscreen using the appropriate method
@@ -140,9 +144,14 @@ class Environment {
             
             // Add a listener to check if fullscreen was successful
             document.addEventListener('fullscreenchange', this.onFullscreenChange.bind(this));
+            
+            // Force a resize event to ensure proper scaling
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 300);
         } else {
             this.touchDown = false;
-            this.onScroll(null);
+            if (e) this.onScroll(e);
         }
     }
     
@@ -242,25 +251,39 @@ class Environment {
     }
 
     setIOSFullscreen() {
-        const app = document.getElementById('app-root') || document.getElementById('root');
+        // For iOS devices, we need to set up special handling for fullscreen
+        // This is because iOS doesn't support true fullscreen API
+        const app = document.body;
         if (app) {
             app.style.height = '150vh';
             app.style.position = 'absolute';
             app.style.top = '25vh';
+            
+            // Set the canvas position
+            const canvas = document.getElementById('game-canvas');
+            if (canvas) {
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0';
+            }
+            
+            // Scroll to the right position
+            const top = window.innerHeight * 0.25;
+            window.scrollTo(0, top);
         }
-        
-        const top = window.innerHeight * 0.25;
-        window.scrollTo(0, top);
     }
-
+    
     removeIOSFullscreen() {
         document.body.style.height = '100vh';
-        const app = document.getElementById('app-root') || document.getElementById('root');
-        if (app) {
-            app.style.top = '0';
+        document.body.style.position = 'fixed';
+        
+        const canvas = document.getElementById('game-canvas');
+        if (canvas) {
+            canvas.style.top = '0';
         }
+        
         window.scrollTo(0, 0);
     }
+    
 
     preventDefault(a) {
         a.preventDefault();
