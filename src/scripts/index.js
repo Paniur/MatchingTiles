@@ -1,7 +1,6 @@
 import { App } from "./system/App";
 import { Config } from "./game/Config";
 import environment from "../utils/Environment";
-
 // Initialize environment handlers
 document.addEventListener('DOMContentLoaded', () => {
     // Ensure environment is initialized before running the app

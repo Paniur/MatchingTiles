@@ -3,8 +3,7 @@ import { Loader } from "./Loader";
 import { SceneManager } from "./SceneManager";
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
-import environment from "../../utils/Environment";
-
+import environment from "../../utils/Environment";    
 // Expose PIXI to the global window for the browser extension
 window.__PIXI_INSPECTOR_GLOBAL_HOOK__ = { PIXI };
 

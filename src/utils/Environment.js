@@ -2,23 +2,25 @@ import Screenfull from 'screenfull';
 import { UAParser } from 'ua-parser-js';
 
 class Environment {
-    private fullScreenController: any;
-    public isIosBrowser: boolean;
-    public touchDown: boolean = false;
-    private isFullscreen: boolean = false;
-    private intervalTimeOut: any;
-    private preventDefaultHandler: any;
-    private onResizetHandler: any;
-    private onTouchStartHandler: any;
-    private onScrollHandler: any;
-    private touchendHandler: any;
-    private visibilityChangeHandler: any;
-    private env: UAParser;
-    private isiOSChrome: boolean;
-    private isiOSSafari: boolean;
-    private iosVersion = 0;
-
     constructor() {
+        // Initialize properties
+        this.fullScreenController = null;
+        this.isIosBrowser = false;
+        this.touchDown = false;
+        this.isFullscreen = false;
+        this.intervalTimeOut = null;
+        this.preventDefaultHandler = null;
+        this.onResizetHandler = null;
+        this.onTouchStartHandler = null;
+        this.onScrollHandler = null;
+        this.touchendHandler = null;
+        this.visibilityChangeHandler = null;
+        this.env = null;
+        this.isiOSChrome = false;
+        this.isiOSSafari = false;
+        this.iosVersion = 0;
+        
+        // Initialize environment
         this.env = new UAParser();
         this.fullScreenController = Screenfull;
         const browser = this.getBrowser();
@@ -32,20 +34,29 @@ class Environment {
         this.touchendHandler = this.requestFullscreen.bind(this);
         this.visibilityChangeHandler = this.visibilityChange.bind(this);
         document.addEventListener('contextmenu', (event) => event.preventDefault());
+        
+        // Add debug event listeners
+        window.addEventListener('touchstart', () => {
+            console.log('Touchstart detected');
+        }, { passive: false });
+          
+        window.addEventListener('click', () => {
+            console.log('Click detected');
+        });
     }
 
-    public isMobileIos(): boolean {
+    isMobileIos() {
         return /(iPhone|iPod|iPad)/i.test(navigator.userAgent) || this.isIpad();
     }
 
-    public isIpad(): boolean {
+    isIpad() {
         if ((/Mac/i.test(navigator.userAgent)) && navigator.maxTouchPoints > 0) {
             return true;
         }
         return false;
     }
 
-    public inIframe(): boolean {
+    inIframe() {
         try {
             return window.self !== window.top;
         } catch (e) {
@@ -53,20 +64,20 @@ class Environment {
         }
     }
 
-    public isMobile(): boolean {
+    isMobile() {
         return /Mobi|Android|iPhone|iPod|iPad|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                ((/Mac/i.test(navigator.userAgent)) && navigator.maxTouchPoints > 0);
     }
 
-    public getBrowser(): any {
+    getBrowser() {
         return this.env.getBrowser();
     }
 
-    public getOS(): any {
+    getOS() {
         return this.env.getOS();
     }
 
-    public getDeviceType(): 'mobile' | 'desktop' {
+    getDeviceType() {
         if (
             /Mobi/i.test(navigator.userAgent) ||
             /Android/i.test(navigator.userAgent) ||
@@ -81,30 +92,30 @@ class Environment {
         return 'desktop';
     }
 
-    public isFullScreenSupported(): boolean {
+    isFullScreenSupported() {
         return Screenfull.isEnabled;
     }
 
-    public isFullScreen(): boolean {
+    isFullScreen() {
         return window.innerHeight === window.screen.height;
     }
 
-    public requestFullscreen(e?: any): void {
+    requestFullscreen(e) {
         if (!this.isFullScreen() && this.isFullScreenSupported()) {
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen();
-            } else if ((elem as any).mozRequestFullScreen) {
+            } else if (elem.mozRequestFullScreen) {
                 /* Firefox */
-                (elem as any).mozRequestFullScreen();
-            } else if ((elem as any).webkitRequestFullscreen) {
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) {
                 /* Chrome, Safari & Opera */
                 this.touchDown = false;
                 if (e) this.onScroll(e);
-                (elem as any).webkitRequestFullscreen();
-            } else if ((elem as any).msRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
                 /* IE/Edge */
-                (elem as any).msRequestFullscreen();
+                elem.msRequestFullscreen();
             }
         } else {
             this.touchDown = false;
@@ -112,7 +123,7 @@ class Environment {
         }
     }
 
-    public setupFullscreenHandlers(): void {
+    setupFullscreenHandlers() {
         debugger;
         if (this.isMobileIos() && !this.inIframe()) {
             this.setIOSFullscreen();
@@ -133,7 +144,7 @@ class Environment {
         }
     }
 
-    public removeFullscreenHandlers(): void {
+    removeFullscreenHandlers() {
         if (this.isMobileIos() && !this.inIframe()) {
             this.removeIOSFullscreen();
         }
@@ -148,7 +159,7 @@ class Environment {
         document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
     }
 
-    public setIOSFullscreen(): void {
+    setIOSFullscreen() {
         const app = document.getElementById('app-root') || document.getElementById('root');
         if (app) {
             app.style.height = '150vh';
@@ -160,7 +171,7 @@ class Environment {
         window.scrollTo(0, top);
     }
 
-    public removeIOSFullscreen(): void {
+    removeIOSFullscreen() {
         document.body.style.height = '100vh';
         const app = document.getElementById('app-root') || document.getElementById('root');
         if (app) {
@@ -169,12 +180,12 @@ class Environment {
         window.scrollTo(0, 0);
     }
 
-    private preventDefault(a: any): void {
+    preventDefault(a) {
         a.preventDefault();
         a.stopPropagation();
     }
 
-    private checkFullscreenIOS(): void {
+    checkFullscreenIOS() {
         if (this.isMobileIos() && !this.inIframe()) {
             let verticalOfset = 0.9;
 
@@ -206,12 +217,12 @@ class Environment {
         }
     }
 
-    private onResize(_e: any): void {
+    onResize(_e) {
         if (this.touchDown) {
             return;
         }
-        let f: any;
-        let g: any = 5;
+        let f;
+        let g = 5;
         clearInterval(f);
         f = setInterval(() => {
             this.checkFullscreenIOS();
@@ -221,7 +232,7 @@ class Environment {
         }, 100);
     }
 
-    private onScroll(_e: any): void {
+    onScroll(_e) {
         if (this.touchDown) {
             return;
         }
@@ -233,13 +244,13 @@ class Environment {
         }, 0);
     }
 
-    private visibilityChange(): void {
+    visibilityChange() {
         if (document.hidden) {
             this.touchDown = false;
         }
     }
 
-    private onTouchStart(a: any): void {
+    onTouchStart(a) {
         this.touchDown = true;
         if (!this.isFullscreen) {
             this.preventDefault(a);
