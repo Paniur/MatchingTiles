@@ -2,10 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Matching Tiles</title>
+    <canvas width="window.innerWidth" height="window.innerHeight"></canvas>
   </head>
   <style>
 body {
@@ -16,7 +16,7 @@ body {
     overflow: hidden;
     touch-action: manipulation; /* optional, but can help */
     background-color: #000;
-    position: fixed;
+    /* position: fixed; */
 }
 canvas {
     position: absolute;
