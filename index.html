@@ -234,7 +234,21 @@ canvas {
 
   </style>
   <body>
+    <canvas id="game-canvas"></canvas>
     <script>
+      // Set up canvas size correctly for touch handling
+      const canvas = document.getElementById('game-canvas');
+      function resizeCanvas() {
+        const width = document.documentElement.clientWidth || window.innerWidth;
+        const height = document.documentElement.clientHeight || window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      }
+      
+      // Initial sizing and resize handling
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('orientationchange', resizeCanvas);
       // // Prevent scrolling on mobile devices
       // document.addEventListener('touchmove', function(e) {
       //   e.preventDefault();

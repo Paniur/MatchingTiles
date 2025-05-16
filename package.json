@@ -8,8 +8,11 @@
     "start": "webpack-dev-server --config webpack/base.js --open"
   },
   "dependencies": {
+    "@types/ua-parser-js": "^0.7.39",
     "gsap": "^3.12.5",
-    "pixi.js": "^8.0.2"
+    "pixi.js": "^8.0.2",
+    "screenfull": "^6.0.2",
+    "ua-parser-js": "^2.0.3"
   },
   "devDependencies": {
     "babel-loader": "^8.3.0",

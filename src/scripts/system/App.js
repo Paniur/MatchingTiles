@@ -3,6 +3,7 @@ import { Loader } from "./Loader";
 import { SceneManager } from "./SceneManager";
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
+import environment from "../../utils/Environment";
 
 // Expose PIXI to the global window for the browser extension
 window.__PIXI_INSPECTOR_GLOBAL_HOOK__ = { PIXI };
@@ -45,18 +46,22 @@ class Application {
                 this.setupFullscreenHandling();
             }
             
+            // Set up environment handlers for fullscreen and touch
+            environment.setupFullscreenHandlers();
+            
             // Initial resize
             this.resize();
+            
+            // Add event listener for cleanup when component unmounts
+            window.addEventListener('beforeunload', () => {
+                environment.removeFullscreenHandlers();
+            });
         })()
     }
 
     // Check if running in an iframe
     inIframe() {
-        try {
-            return window.self !== window.top;
-        } catch (e) {
-            return true;
-        }
+        return environment.inIframe();
     }
     
     // Set up iframe message handling
@@ -105,77 +110,64 @@ class Application {
     
     // Check if device is mobile
     isMobile() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        return environment.isMobile();
     }
     
     // Toggle fullscreen
     toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.error(`Error attempting to enable fullscreen: ${err.message}`);
-            });
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
+        environment.requestFullscreen();
     }
 
     resize() {
-        // Get current window dimensions
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
+        // Get current dimensions - use clientWidth/Height for iframe compatibility
+        const containerWidth = document.documentElement.clientWidth || window.innerWidth;
+        const containerHeight = document.documentElement.clientHeight || window.innerHeight;
+        
+        // Store dimensions for reference
+        this.width = containerWidth;
+        this.height = containerHeight;
         
         // Determine orientation
-        const isLandscape = windowWidth > windowHeight;
+        const isLandscape = containerWidth > containerHeight;
         
-        // Set game dimensions based on orientation
-        if (isLandscape) {
-            this.width = this.defaultWidth;
-            this.height = this.defaultHeight;
-        } else {
-            this.width = this.defaultHeight;
-            this.height = this.defaultWidth;
-        }
-        
-        // Apply scaling strategy (keep aspect ratio)
-        const scaleX = windowWidth / this.width;
-        const scaleY = windowHeight / this.height;
-        const scale = Math.min(scaleX, scaleY);
-        
-        // For iframe environments, ensure we don't scale too small
         if (this.inIframe()) {
-            // Ensure minimum scale for visibility in iframes
-            const minScale = 0.5;
-            this.scale = Math.max(scale, minScale);
+            // In iframe: no scaling, just fit exactly to the iframe dimensions
+            // This ensures touch coordinates are correctly mapped
+            this.scale = 1;
+            this.app.stage.scale.set(1);
+            this.app.stage.x = 0;
+            this.app.stage.y = 0;
+            
+            // Resize the renderer to match the iframe exactly
+            this.app.renderer.resize(containerWidth, containerHeight);
         } else {
-            this.scale = scale;
-        }
-        
-        // Apply the scale to the stage
-        this.app.stage.scale.set(this.scale);
-        
-        // Center the stage (alignment strategy)
-        this.app.stage.x = (windowWidth - (this.width * this.scale)) / 2;
-        this.app.stage.y = (windowHeight - (this.height * this.scale)) / 2;
-        
-        // Special handling for iOS devices
-        if (this.isIOS() && this.app.stage.y > 2) {
-            this.app.stage.y = Math.round(this.app.stage.y - 0.3 * this.app.stage.y);
-        }
-        
-        // Ensure stage is always centered in iframe
-        if (this.inIframe()) {
-            // Force center alignment in iframe
-            this.app.stage.x = Math.max(0, (windowWidth - (this.width * this.scale)) / 2);
-            this.app.stage.y = Math.max(0, (windowHeight - (this.height * this.scale)) / 2);
+            // Not in iframe: use responsive scaling approach
+            // Calculate scale based on default dimensions
+            const targetWidth = isLandscape ? this.defaultWidth : this.defaultHeight;
+            const targetHeight = isLandscape ? this.defaultHeight : this.defaultWidth;
+            
+            const scaleX = containerWidth / targetWidth;
+            const scaleY = containerHeight / targetHeight;
+            this.scale = Math.min(scaleX, scaleY);
+            
+            // Apply the scale to the stage
+            this.app.stage.scale.set(this.scale);
+            
+            // Center the stage
+            this.app.stage.x = Math.round((containerWidth - (targetWidth * this.scale)) / 2);
+            this.app.stage.y = Math.round((containerHeight - (targetHeight * this.scale)) / 2);
+            
+            // Special handling for iOS devices when not in iframe
+            if (this.isIOS() && this.app.stage.y > 2) {
+                this.app.stage.y = Math.round(this.app.stage.y - 0.3 * this.app.stage.y);
+            }
         }
         
         // Dispatch resize event for other components
         this.dispatchResizeEvent({
             scale: this.scale,
-            width: this.width,
-            height: this.height,
+            width: containerWidth,
+            height: containerHeight,
             isLandscape: isLandscape,
             inIframe: this.inIframe()
         });
@@ -183,8 +175,7 @@ class Application {
     
     // Check if device is iOS
     isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        return environment.isMobileIos();
     }
     
     // Dispatch custom resize event
