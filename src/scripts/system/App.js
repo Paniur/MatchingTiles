@@ -42,11 +42,43 @@ class Application {
     }
 
     resize() {
-        const canvas = document.querySelector('canvas');
-        const ration = Math.min(window.innerWidth / canvas.width, window.innerHeight / canvas.height);
-        canvas.style.width = canvas.width * ration + 'px';
-        canvas.style.height = canvas.height * ration + 'px';
+        // Get current window dimensions
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Determine orientation
+        const isLandscape = windowWidth > windowHeight;
+        
+        // Set game dimensions based on orientation
+        if (isLandscape) {
+            this.width = this.defaultWidth;
+            this.height = this.defaultHeight;
+        } else {
+            this.width = this.defaultHeight;
+            this.height = this.defaultWidth;
+        }
+        
+        // Apply scaling strategy (keep aspect ratio)
+        const scaleX = windowWidth / this.width;
+        const scaleY = windowHeight / this.height;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // Apply the scale to the stage
+        this.app.stage.scale.set(scale);
+        
+        // Center the stage (alignment strategy)
+        this.app.stage.x = (windowWidth - (this.width * scale)) / 2;
+        this.app.stage.y = (windowHeight - (this.height * scale)) / 2;
+        
+        // Dispatch resize event for other components
+        this.dispatchResizeEvent({
+            scale: scale,
+            width: this.width,
+            height: this.height,
+            isLandscape: isLandscape
+        });
     }
+    
 
     dispatchResizeEvent(data) {
         const event = new CustomEvent('game-resize', { detail: data });
